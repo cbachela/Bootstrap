@@ -1,0 +1,172 @@
+---
+title: "Exact Bootstrap Moments"
+subtitle: ""
+author: "Cyril Bachelard"
+date: \today
+header-includes:
+   - \usepackage{fancyhdr}
+   - \usepackage{sectsty}
+   - \sectionfont{\newpage}
+   - \pagestyle{fancy}
+   - \fancyhead[L]{\rightmark}
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    number_sections: true
+    fig_width: 9
+    fig_height: 6
+    fig_caption: true
+documentclass: report
+self_contained: yes
+---
+
+```{r setup, include=FALSE}
+# KNIT OPTIONS
+knitr::opts_chunk$set(echo = FALSE, cache = FALSE, tidy = TRUE, cache.lazy = FALSE, message = FALSE, warning = FALSE)
+```
+
+```{r load_packages, include=FALSE}
+# LIBRARYS LOAD
+require(knitr)
+require(pander)
+require(DT)
+require(partitions)
+require(boot)
+require(volesti)
+require(slolz)
+require(RP)
+wd <- "H:/R/notingit/Bootstrap/"
+source( paste0(wd, "Source/custom_functions.R") )
+```
+
+```{r html_render_trick, include = FALSE}
+# htmltools::tagList(hc_columnChart(matrix(1)))
+# htmltools::tagList(datatable(matrix(1)))
+```
+
+```{r report_setting, include=FALSE}
+
+# Report settings
+
+```
+
+
+
+# Classical bootstrap
+
+
+
+
+
+```{r, results='asis'}
+
+  n <- 8
+  B <- 10^3
+  n_boot <- 50
+  df <- 5
+  set.seed(1111)
+  x <- rt( n = n, df = df )
+  z <- x^2
+  
+  s_unb <- var(z)
+  s_ml <- sum( (z - mean(z))^2 ) / n
+  sk <- skewFUN( x = z )
+  ks <- kurtFUN( x = z )
+  w_bar <- rep(1 / n, n)
+  P <- rdirichlet( n = B, alpha = rep(1, n) )
+  P_lp2 <- apply( P, 1, lpNorm, p = 2 )
+  P_lp3 <- apply( P, 1, lpNorm, p = 3 )
+  
+ 
+  # Ordinary bootstrap
+  boot_mat <- matrix( NA, nrow = B, ncol = n_boot )
+  tic <- Sys.time()
+  for ( j in 1:n_boot ) {
+    Boot <- boot::boot( data = z,
+                        statistic = meanBoot,
+                        R = B )
+    boot_mat[ ,j] <- Boot$t
+  }
+  (toc_boot <- Sys.time() - tic)
+  
+  var_boot <- apply( boot_mat, 2, var )
+  sk_boot <- apply( boot_mat, 2, skewFUN )
+  kurt_boot <- apply( boot_mat, 2, kurtFUN )
+  cm3_boot <- apply( boot_mat, 2, function(x) { sum( (x - mean(x))^3 ) / length(x) } )
+  
+  
+  # Partitions
+  parts_mat <- partitions::parts( n )
+  draws <- gridDraws( parts_mat = parts_mat, cnames = FALSE, mpfr = FALSE )
+  prob <- draws2prob( draws = draws )
+  prob_tot <- prob * draws[2, ]
+  
+  # Reorder results by decreasing total probability
+  ordering <- rev( order( prob_tot) ) 
+  parts_mat <- parts_mat[ ,ordering]
+  draws <- draws[ ,ordering]
+  prob <- prob[ordering]
+  prob_tot <- prob_tot[ordering]
+  
+  lp_parts <- apply( parts_mat / n, 2, lpNorm, p = 2 )
+  
+  
+  # permutations
+  lP <- list()
+  lTheta <- list()
+  lLHS <- lRHS <- list()
+  lLHS3 <- lRHS3 <- list()
+  lRHS4 <- list()
+  
+  for( j in 1:ncol(parts_mat) ) {
+    
+    if ( length(unique(parts_mat[ ,j])) > 1 ) {
+      perm <- gtools::permutations( n = n, 
+                                    r = n, 
+                                    v = parts_mat[ ,j], 
+                                    set = FALSE,
+                                    repeats.allowed = FALSE )
+      perm_unique <- perm[!duplicated(perm), ]
+    } else {
+      perm_unique <- t(parts_mat[ ,j])
+    }
+    lP[[j]] <- perm_unique
+    theta <- apply( perm_unique / n, 1, function(p) { sum(p * z) } )
+    lTheta[[j]] <- theta
+    lLHS[[j]] <- (lp_parts[j]^2 - 1/n) * s_unb
+    lRHS[[j]] <- sum( (theta - mean(theta))^2 ) / length(theta)
+    
+    lLHS3[[j]] <- (lp_parts[j]^2 - 1/n) * s_unb
+    
+    lRHS3[[j]] <- sum( (theta - mean(theta))^3 ) / length(theta)
+    lRHS4[[j]] <- sum( (theta - mean(theta))^4 ) / length(theta)
+  }
+
+  # Weights for each theta
+  lW <- lapply( 1:length(lP), FUN = function(i) { rep(prob[i], nrow(lP[[i]])) } )
+  w <- unlist(lW)
+  sum(w)
+  
+  plot( unlist(lRHS), unlist(lLHS) )
+  plot( unlist(lRHS3), unlist(lLHS3) )
+  
+
+  
+  
+  
+  
+  # Mean
+  sum( w * unlist(lTheta) )
+  mean(z) # same same
+  unlist( lapply( lTheta, FUN = mean ) )
+  
+  M1 <- mean(z)
+  
+
+
+```
+
+
+
