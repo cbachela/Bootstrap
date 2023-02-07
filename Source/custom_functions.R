@@ -161,7 +161,7 @@
                        m3 = NULL, 
                        w_bar = NULL, 
                        exp3norm3 = NULL, # E(||w||_3^3)
-                       exp2norm2 = NULL, # E(||w||_2^2)
+                       # exp2norm2 = NULL, # E(||w||_2^2)
                        expw2 = NULL, # E(w^2)
                        M = NULL )
   {

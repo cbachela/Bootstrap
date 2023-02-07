@@ -29,67 +29,6 @@
   require(gtools)
   
   
-  # --------------------------------------------------------------------------
-  # Helper functions
-  # --------------------------------------------------------------------------
-  
-  # --------------------------------------------------------------------------
-  rdirichlet <- function( n, alpha ) 
-  {
-    l <- length(alpha)
-    x <- matrix( rgamma(l * n, alpha), ncol = l, byrow = TRUE )
-    sm <- x %*% rep(1, l)
-    ans <- x / as.vector(sm)
-    return( ans )
-  }
-   
-  
-  # --------------------------------------------------------------------------
-  gridDraws <- function ( parts_mat, cnames = FALSE ) 
-  {
-    FUN <- function ( x ) 
-    {
-      tmp <- table(x)
-      num1 <- factorial(sum(x))
-      if ( length(x) == sum(x) ) {
-        num2 <- num1
-      } else {
-        num2 <- factorial(length(x))
-      }
-      n_paths_to_level_set <- num1 / prod(factorial(x))
-      n_points_in_level_set <- num2 / prod(factorial(tmp))
-      ans <- c(n_paths_to_level_set,
-               n_points_in_level_set)
-      return( ans )
-    }
-    ans <- apply( X = parts_mat, MARGIN = 2, FUN = FUN )
-    rownames(ans) <- c("# paths to the same point", 
-                       "# points in the same level set")
-    if ( isTRUE(cnames) ) {
-      colnames(ans) <- apply( X = parts_mat, 
-                              MARGIN = 2, 
-                              FUN = function(X) { paste(X, collapse = ".") } )
-    }
-    return( ans )
-  }
-  
-  # --------------------------------------------------------------------------
-  draws2prob <- function ( draws ) 
-  {
-    ans <- draws[1, ] / as.numeric(draws[1, ] %*% draws[2, ])
-    return( ans )
-  }
-  
-  
-  
-  # --------------------------------------------------------------------------
-  betaMoments <- function( a, a0, m )
-  {
-    mvec <- 0:(m-1)
-    # prod( a + mvec ) / prod( a + b + mvec )
-    prod( (a + mvec) / (a0 + mvec) )
-  }
-  
   
   
   
@@ -99,7 +38,7 @@
   # --------------------------------------------------------------------------
   
   # Define real-valued vector z
-  n <- 3
+  n <- 4
   z <- 1:n
   
   # Number of simulations (for the Dirichlet sampling case)
@@ -201,6 +140,9 @@
   }
   LHS_version3 <- sum(wisq_bar * b^2) + tmp
   
+  
+  wisq_bar; (2*n - 1) / n^3
+  wiwj_bar; (n - 1) / n^3
   
   
   LHS_version1

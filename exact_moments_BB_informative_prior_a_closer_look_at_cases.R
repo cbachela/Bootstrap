@@ -500,7 +500,7 @@
       expected_pnormrelp[m] <-  mean( unlist( lapply( lNorm_rel[[m]], FUN = function(x) { mean(x^m) } ) ) )
       
       # Exact expected p-norm (to the power of p)
-      betaFUN <- function(a) { betaMoments( a = a, b = sum(alpha) - a, m = m ) }
+      betaFUN <- function(a) { betaMoments( a = a, a0 = sum(alpha), m = m ) }
       beta_moments <- unlist( lapply( alpha, FUN = betaFUN ) )
       exact_expected_pnormp[m] <- sum(beta_moments)
       
@@ -605,7 +605,7 @@
   sum( (z - mean(z))^3 ) / n * (n^2 / ((n-1) * (n-2)))
   
   
-  Moments[1, "mom3_boot"]
+  Moments[i, "mom3_boot"]
   M3BBFUN( x = z, M2 = 1, scl = FALSE )
   sum( (z - mean(z))^3 ) / n * 2 / ((n + 1) * (n + 2))   # same same
   sum( (z - mean(z))^3 ) / n * EPNR[1, 3] / (1 - lpNorm(w_bar, p = 3)^3)
