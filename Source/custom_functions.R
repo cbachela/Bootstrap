@@ -62,9 +62,20 @@
       } else if ( m == 3 ) {
         ans <- N^2 / ((N - 1) * (N - 2))
       } else if ( m == 4 ) {
+        # scl4denom <- (N - 1) * (N - 2) * (N - 3)
+        # scl4a <- N * (N^2 - 2*N + 3)
+        # # scl4b <- 3*N * (2*N - 3)
+        # scl4b <- -3*N * (2*N - 3)
+        # # From Dodge_Rousson_1999_The Complications of the Fourth Central Moment
+        # # scl4denom <- N^3
+        # # scl4a <- (N - 1) * (N^2 - 3*N + 3)
+        # # scl4b <- 3 * (2*N - 3) * (N - 1)
+        
+        # h-statistic (see e.g., Wolfram math)  - same as base version
         scl4denom <- (N - 1) * (N - 2) * (N - 3)
-        scl4a <- N * (N^2 - 2 * N + 3)
-        scl4b <- 3 * N * (2 * N - 3)
+        scl4a <- N * (N^2 - 2*N + 3)
+        scl4b <- 3*N * (3 - 2*N)
+        
         ans <- c( scl4a = scl4a, scl4b = scl4b, scl4denom = scl4denom )
       } else {
         stop( "parameter m has to be 2, 3 or 4.")
@@ -181,7 +192,7 @@
       m3 <- m3_ml * scl3
     }
     # ans <- m3 * ( exp3norm3 - 3 * exp2norm2 * sum(w_bar^2) + 2 * sum(w_bar^3) ) # only holds if w_bar = 1/n, for all i
-    ans <- m3 * ( exp3norm3 - 3 * sum(w_bar * expw2) + 2 * sum(w_bar^3) ) # only holds if w_bar = 1/n, for all i
+    ans <- m3 * ( exp3norm3 - 3 * sum(w_bar * expw2) + 2 * sum(w_bar^3) )
     return( ans )
   }
   
@@ -211,9 +222,13 @@
       m2_ml <- sum( w_bar * (z - z_bar)^2 )
       m4_ml <- sum( w_bar * (z - z_bar)^4 )
       if ( is.null(scl4) ) {
-        scl4 <- biasCorrection( w_bar = w_bar, m = 4 )
+        if ( identical( w_bar, rep(1/length(z), length(z)) ) ) {
+          scl4 <- biasCorrection( N = length(w_bar), m = 4, unweighted = TRUE )
+        } else {
+          scl4 <- biasCorrection( w_bar = w_bar, m = 4 )
+        }
       }
-      m4 <- (m4_ml * scl4["scl4a"] - m2_ml^2 * scl4["scl4b"]) / scl4["scl4denom"]
+      m4 <- (m4_ml * scl4["scl4a"] + m2_ml^2 * scl4["scl4b"]) / scl4["scl4denom"]
     }
     # ans <- m4 * ( exp4norm4 - 3 * sum(w_bar^4) - 4 * exp3norm3 * sum(w_bar^2) + 6 * exp2norm2 * sum(w_bar^3) )
     ans <- m4 * ( exp4norm4 - 3 * sum(w_bar^4) - 4 * sum(w_bar * expw3) + 6 * sum(w_bar^2 * expw2) )
